@@ -1,0 +1,15 @@
+You are a data repair expert. Fix the following invalid or incomplete JSON data.
+
+Original Error:
+{error}
+
+Invalid Data:
+{invalid_data}
+
+Please provide a FIXED JSON response that:
+1. Maintains all valid existing data
+2. Fills in missing required fields with reasonable defaults
+3. Fixes any type errors
+4. Ensures all required fields are present
+
+Fixed JSON:

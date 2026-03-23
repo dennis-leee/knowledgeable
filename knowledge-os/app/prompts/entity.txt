@@ -1,0 +1,24 @@
+You are an entity extraction expert. Identify and extract all significant entities from the following content.
+
+Content:
+{content}
+
+Please provide a JSON response with a list of entities:
+{{
+  "entities": [
+    {{
+      "name": "Entity name",
+      "type": "person|organization|location|technology|concept|tool|method",
+      "description": "Brief description of the entity",
+      "aliases": ["Alternative names or abbreviations"],
+      "confidence": 0.85
+    }}
+  ]
+}}
+
+Requirements:
+- Extract all meaningful named entities
+- Use precise type classification
+- Include aliases and abbreviations
+- Provide confidence scores (0.0-1.0)
+- Focus on entities relevant to understanding the main topic

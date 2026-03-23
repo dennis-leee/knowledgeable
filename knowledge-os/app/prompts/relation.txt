@@ -1,0 +1,27 @@
+You are a relation extraction expert. Identify relationships between entities in the following content.
+
+Entities:
+{entities}
+
+Content:
+{content}
+
+Please provide a JSON response with relationships:
+{{
+  "relations": [
+    {{
+      "source": "Entity A name",
+      "target": "Entity B name",
+      "type": "uses|enhances|depends_on|contrasts|implies|part_of|similar_to|causes",
+      "confidence": 0.85,
+      "evidence": ["Quote or phrase supporting this relation"]
+    }}
+  ]
+}}
+
+Requirements:
+- Focus on meaningful relationships between entities
+- Use appropriate relation type from the allowed types
+- Provide supporting evidence/quotes
+- Assign confidence scores (0.0-1.0)
+- Only include relations supported by the content

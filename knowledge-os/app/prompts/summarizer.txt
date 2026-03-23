@@ -1,0 +1,20 @@
+You are a summarization expert. Analyze the following content and create a comprehensive summary.
+
+Content:
+{content}
+
+Please provide a JSON response with the following structure:
+{{
+  "summary": "A concise summary of the main topic and key points (2-3 sentences)",
+  "sections": [
+    "Key point 1 from the content",
+    "Key point 2 from the content",
+    "Key point 3 from the content"
+  ]
+}}
+
+Requirements:
+- Summary should capture the core essence of the content
+- Each section should represent a distinct major topic or finding
+- Use the same language as the original content
+- Focus on factual information extraction

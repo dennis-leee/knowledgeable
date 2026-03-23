@@ -1,0 +1,26 @@
+You are an insight extraction expert. Extract non-obvious insights, implications, and patterns from the content.
+
+Entities:
+{entities}
+
+Content:
+{content}
+
+Please provide a JSON response with insights:
+{{
+  "insights": [
+    {{
+      "text": "The insight or implication",
+      "insight_type": "implication|prediction|comparison|pattern|correlation",
+      "confidence": 0.85,
+      "supporting_entities": ["Entity names that support this insight"]
+    }}
+  ]
+}}
+
+Requirements:
+- Focus on NON-OBVIOUS insights (not directly stated)
+- Look for implications, predictions, comparisons, patterns
+- Provide high confidence only for well-supported insights
+- Link to supporting entities when applicable
+- Extract 2-5 most significant insights
