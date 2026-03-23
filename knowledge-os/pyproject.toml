@@ -35,6 +35,7 @@ dependencies = [
     "lxml>=5.0.0",
     "python-dateutil>=2.8.0",
     "tiktoken>=0.7.0",
+    "streamlit>=1.30.0",
 ]
 
 [project.optional-dependencies]
@@ -50,6 +51,7 @@ dev = [
 
 [project.scripts]
 knowledge-os = "app.main:main"
+knowledge-os-ui = "streamlit run app/ui.py"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -111,6 +111,8 @@ pip install -e ".[dev]"
 
 ### 运行
 
+#### CLI 模式
+
 ```bash
 # 处理单个 URL
 python -m app.main --url "https://example.com"
@@ -121,6 +123,23 @@ python -m app.main --url "https://example.com" --json
 # 处理文件中的多个 URL
 python -m app.main --file urls.txt
 ```
+
+#### Web UI 模式
+
+```bash
+# 启动 Streamlit Web 界面
+streamlit run app/ui.py
+
+# 或使用命令别名
+knowledge-os-ui
+```
+
+Web UI 功能：
+- 侧边栏输入 URL
+- 实时显示处理进度
+- 展示摘要、实体、关系、洞察
+- 历史记录管理
+- 验证状态指示
 
 ### 配置
 
