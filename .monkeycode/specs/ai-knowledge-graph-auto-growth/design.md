@@ -2,7 +2,7 @@
 
 Feature Name: ai-knowledge-graph-auto-growth
 Created: 2026-03-23
-Version: 0.3.0 (Enhanced with LangGraph + GPT Best Practices)
+Version: 0.4.0 (Final - Integrated with Research Findings)
 
 ---
 
@@ -14,6 +14,7 @@ Version: 0.3.0 (Enhanced with LangGraph + GPT Best Practices)
 |------|------|----------|
 | 0.1.0 | 2026-03-23 | 初始版本 |
 | 0.3.0 | 2026-03-23 | 整合 LangGraph 编排 + JSON graph 轻量存储 + GPT 方案优点 |
+| 0.4.0 | 2026-03-23 | 整合 Claude Opus 深度研究报告：FalkorDB/Cognee 直接复用、MCP SDK 官方实现、Agent Skills 标准格式、Temporal KG、Constitutional AI 安全机制 |
 
 ### 1.1 整体架构图（LangGraph 编排 + 轻量存储）
 
@@ -45,6 +46,7 @@ graph TB
 
     subgraph Storage Layer
         JSON_Graph[(JSON Graph)]
+        Temporal_Graph[(Temporal Graph)]
         Vector_Store[(Vector Store)]
         File_System[File System]
         Config_Store[Config Store]
@@ -52,13 +54,14 @@ graph TB
 
     subgraph Output Layer
         Graph_Visualizer[Knowledge Graph Visualizer]
-        Skill_Generator[Skill Generator]
-        MCP_Server[MCP Server Generator]
+        Skill_File[Skill Files<br/>(Markdown + YAML)]
+        MCP_Server[MCP Server<br/>(Official SDK)]
     end
 
     subgraph Intelligence Layer
         Active_Learner[Active Learner]
         Self_Healer[Self-Healing Engine]
+        Safety_Agent[Safety Agent<br/>(Constitutional AI)]
         Audit_Logger[Audit Logger]
     end
 
@@ -85,8 +88,12 @@ graph TB
 
 **核心优势：**
 - LangGraph 提供 DAG + 状态机，流程可视化，调试方便
-- JSON Graph 轻量原型，Neo4j 预留扩展
+- JSON Graph 轻量原型，FalkorDB/Neo4j 预留扩展
 - 每个 Agent 独立，可单独测试和替换
+- **Temporal Knowledge Graph**：支持时间维度追踪（Graphiti 模式）
+- **Human-in-the-loop**：强制要求，非可选
+- **MCP 官方 SDK**：标准协议，原生支持
+- **Agent Skills 标准**：Markdown + YAML frontmatter 格式
 
 ### 1.2 核心处理流程
 
@@ -1066,16 +1073,390 @@ class OutputAdapterRegistry:
 
 ---
 
-## 12. 依赖技术栈
+## 12. 依赖技术栈（基于研究报告优化）
 
-| 层级 | 技术 | 说明 |
-|------|------|------|
-| 语言 | Python 3.11+ | 生态丰富 |
-| 框架 | FastAPI | 异步，高性能 |
-| 图数据库 | Neo4j | 成熟，稳定 |
-| 向量检索 | Qdrant | 轻量，易用 |
-| LLM 集成 | LiteLLM | 统一接口 |
-| URL 抓取 | Playwright | JS 渲染支持 |
-| 配置 | Pydantic + YAML | 类型安全 |
-| 可视化 | D3.js | 成熟，交互强 |
+### 12.1 原型阶段推荐（快速验证）
+
+| 层级 | 技术 | 说明 | 来源 |
+|------|------|------|------|
+| **LLM 提取** | FalkorDB GraphRAG SDK | 直接复用，URL→KG+实体关系抽取 | 研究报告 |
+| **知识图谱** | JSON Graph (原型) | 减少强依赖，快速验证 | 内部设计 |
+| **向量存储** | Chroma | 轻量，易用 | 内部设计 |
+| **编排框架** | LangGraph | DAG + 状态机 | 研究报告 |
+| **URL 抓取** | Playwright | JS 渲染支持 | 研究报告 |
+| **MCP Server** | MCP Python SDK | 官方协议实现 | 研究报告 |
+| **Skills 格式** | Markdown + YAML | Agent Skills 标准 | 研究报告 |
+
+### 12.2 生产阶段推荐（可切换）
+
+| 层级 | 性能优先 | 生态优先 | 说明 |
+|------|----------|----------|------|
+| **图数据库** | FalkorDB | Neo4j | FalkorDB: sub-50ms, Rust 实现 |
+| **LLM 提取** | FalkorDB GraphRAG SDK | LangChain + LLMGraphTransformer | Schema 引导抽取 |
+| **向量存储** | Qdrant | pgvector | 已用 PostgreSQL 时推荐 |
+| **Temporal KG** | Graphiti | - | 时间维度追踪 + episodes |
+
+### 12.3 可直接复用的开源组件
+
+```python
+# 原型阶段 - FalkorDB GraphRAG SDK 直接复用
+from falkor_db import GraphRAG
+
+rag = GraphRAG()
+rag.ingest_url("https://example.com")
+graph = rag.get_graph()
+
+# LangChain LLMGraphTransformer（备选）
+from langchain_experimental.graph_transformers import LLMGraphTransformer
+llm_transformer = LLMGraphTransformer(
+    llm=llm,
+    allowed_nodes=["Concept", "Entity", "Event"],
+    allowed_relationships=["uses", "depends_on", "contrasts"]
+)
+```
+
+---
+
+## 13. 安全机制增强（Constitutional AI 模式）
+
+### 13.1 Safety Agent 设计
+
+基于研究报告中的 Constitutional AI 原则，设计安全审查层：
+
+```python
+class SafetyAgent:
+    """强制性的安全审查层（非可选）"""
+    
+    CONSTITUTIONAL_PRINCIPLES = [
+        "不学习破坏性知识（malware、攻击技术）",
+        "不学习操纵性知识（社会工程、虚假信息）",
+        "保护宿主和用户利益",
+        "知识来源可溯源"
+    ]
+    
+    async def evaluate(self, knowledge: Knowledge) -> SafetyResult:
+        # 1. 伤害检测
+        harm_check = await self.check_harm_potential(knowledge)
+        
+        # 2. 操纵检测
+        manipulation_check = await self.check_manipulation(knowledge)
+        
+        # 3. 来源验证
+        source_check = await self.verify_source(knowledge.source)
+        
+        # 4. 综合评估
+        return SafetyResult(
+            approved=all([harm_check, manipulation_check, source_check]),
+            violations=[...],
+            requires_human_review=not all(...)
+        )
+    
+    async def check_harm_potential(self, knowledge: Knowledge) -> bool:
+        """检测知识是否具有潜在危害性"""
+        # 调用 OpenAI Moderation API 或 Anthropic Constitutional AI
+        moderation = await openai.moderations.create(
+            input=knowledge.content
+        )
+        return not any(moderation.results[0].categories)
+```
+
+### 13.2 Human-in-the-Loop 强制要求
+
+```python
+# 配置
+safety:
+  human_inloop_required: true  # 强制，非可选
+  review_threshold: 0.8  # 置信度低于此值必须人工审核
+  sensitive_topics_require_approval:
+    - "security_exploits"
+    - "malware"
+    - "social_engineering"
+    - "misinformation"
+```
+
+---
+
+## 14. Temporal Knowledge Graph（时间维度）
+
+### 14.1 为什么要 Temporal
+
+- 知识随时间演变（新闻、研究更新）
+- 需要追踪知识来源和修改历史
+- 支持"知识状态快照"回溯
+
+### 14.2 Graphiti 模式
+
+```python
+class TemporalKnowledgeGraph:
+    """时间感知知识图谱 - 基于 Graphiti 设计"""
+    
+    async def add_episode(
+        self,
+        knowledge: Knowledge,
+        episode_type: EpisodeType,  # creation, update, verification
+        evidence: List[str],
+        timestamp: datetime
+    ):
+        """添加时间事件（Episode）"""
+        episode = Episode(
+            knowledge_id=knowledge.id,
+            episode_type=episode_type,
+            evidence=evidence,
+            timestamp=timestamp,
+            agent_id=self.current_agent_id
+        )
+        await self.store_episode(episode)
+    
+    async def get_timeline(self, knowledge_id: str) -> List[Episode]:
+        """获取某个知识节点的时间线"""
+        return await self.query_episodes(
+            where={"knowledge_id": knowledge_id},
+            order_by="timestamp"
+        )
+    
+    async def get_snapshot(self, at_time: datetime) -> KnowledgeGraph:
+        """获取某个时间点的知识图谱快照"""
+        episodes = await self.query_episodes(
+            where={"timestamp__lte": at_time}
+        )
+        return self.reconstruct_from_episodes(episodes)
+```
+
+---
+
+## 15. MCP Server 实现（官方 SDK）
+
+### 15.1 使用官方 MCP Python SDK
+
+```python
+# mcp_server/server.py
+from mcp.server import Server
+from mcp.types import Tool, Resource
+
+app = Server("knowledge-graph-mcp")
+
+@app.list_tools()
+async def list_tools() -> List[Tool]:
+    return [
+        Tool(
+            name="search_knowledge",
+            description="Search knowledge graph by topic or entity",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "limit": {"type": "integer", "default": 10}
+                }
+            }
+        ),
+        Tool(
+            name="get_related",
+            description="Get related knowledge nodes",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "node_id": {"type": "string"},
+                    "depth": {"type": "integer", "default": 1}
+                }
+            }
+        )
+    ]
+
+@app.call_tool()
+async def call_tool(name: str, arguments: dict) -> CallToolResult:
+    if name == "search_knowledge":
+        results = await knowledge_graph.search(arguments["query"], arguments.get("limit", 10))
+        return CallToolResult(content=[TextContent(type="text", text=str(results))])
+    # ...
+```
+
+### 15.2 Skills 文件格式（Agent Skills 标准）
+
+```markdown
+---
+name: "knowledge-graph-search"
+version: "1.0.0"
+description: "Search and retrieve knowledge from the knowledge graph"
+category: "knowledge"
+tags: ["search", "knowledge", "graph"]
+compatibility: ["claude", "openai", "gemini"]
+source: "knowledge-graph-auto-growth"
+generated_at: "2026-03-23T12:00:00Z"
+---
+
+# Knowledge Graph Search Skill
+
+## Overview
+This skill provides capabilities to search and retrieve knowledge from the distributed knowledge graph.
+
+## Capabilities
+- Semantic search across all knowledge nodes
+- Relationship traversal (find related concepts)
+- Temporal queries (knowledge at a point in time)
+
+## Usage
+
+### Search by Topic
+\`\`\`
+Search for: "machine learning optimization techniques"
+\`\`\`
+
+### Get Related Knowledge
+\`\`\`
+Node: "backpropagation"
+Depth: 2
+\`\`\`
+
+## Examples
+
+### Example 1: Find optimization techniques
+**Input:** "What are the latest optimization techniques for neural networks?"
+**Output:** Returns nodes related to optimization, with confidence scores and source URLs.
+
+## Best Practices
+- Use specific queries for better results
+- Check source URLs for verification
+- Review confidence scores before using low-confidence knowledge
+```
+
+---
+
+## 16. 多模态输入支持（预留）
+
+基于研究报告建议：
+
+### 16.1 图像理解
+
+```python
+class ImageEntityExtractor:
+    """使用视觉模型提取图像中的实体"""
+    
+    async def extract(self, image_path: str) -> List[Entity]:
+        # GPT-4V / Claude 3.5 Sonnet with vision / Gemini Pro Vision
+        vision_result = await llm.vision.analyze(
+            image=image_path,
+            prompt="Extract all named entities, concepts, and relationships from this image"
+        )
+        return self.parse_entities(vision_result)
+```
+
+### 16.2 音频转文本
+
+```python
+class AudioTranscriber:
+    """使用 Whisper 转录音频"""
+    
+    async def transcribe(self, audio_path: str) -> str:
+        # OpenAI Whisper
+        transcript = await whisper.transcribe(audio_path)
+        return transcript.text
+```
+
+---
+
+## 17. 增量更新机制
+
+### 17.1 LightRAG 风格的增量更新
+
+```python
+class IncrementalUpdater:
+    """增量更新，无需全量重建"""
+    
+    async def update(self, new_knowledge: List[Knowledge]):
+        for knowledge in new_knowledge:
+            # 1. 检查是否已存在
+            existing = await self.graph.find_similar(
+                knowledge.embedding,
+                threshold=0.9
+            )
+            
+            if existing:
+                # 2. 增量更新：添加 Episode
+                await self.temporal_graph.add_episode(
+                    knowledge_id=existing.id,
+                    episode_type="update",
+                    evidence=[knowledge.content],
+                    timestamp=datetime.now()
+                )
+            else:
+                # 3. 新增节点
+                await self.graph.add_node(knowledge)
+```
+
+---
+
+## 18. 研究报告关键发现总结
+
+### 18.1 核心结论
+
+> **"没有任何单一工具能完成 URL→知识图谱→MCP/Skills 导出的完整流程，但组合模块化开源组件效率极高。"** — 研究报告
+
+### 18.2 推荐的 MVP 技术栈
+
+```
+URL 输入 → Playwright 抓取
+         → FalkorDB GraphRAG SDK 提取（原型优先）
+         → JSON Graph 存储（轻量）
+         → MCP Python SDK 导出（标准协议）
+         → Markdown + YAML Skills 文件（Agent Skills 标准）
+```
+
+### 18.3 未来扩展路径
+
+| 阶段 | 升级内容 | 价值 |
+|------|----------|------|
+| 原型 → V1 | FalkorDB 替换 JSON Graph | 性能提升，sub-50ms |
+| V1 → V2 | + Temporal Graph (Graphiti) | 时间维度追踪 |
+| V2 → V3 | + Active Learning (LangGraph+LlamaIndex) | 自主研究能力 |
+
+---
+
+## 19. 与龙虾平台的协作边界
+
+### 19.1 龙虾承载
+
+| 功能 | 龙虾角色 |
+|------|----------|
+| 任务调度 | 定时触发 + cron |
+| 人类审核 UI | 审核工作流 |
+| Skill 生态 | MCP Server 注册 |
+| Memory | 长期记忆存储 |
+
+### 19.2 本系统承载
+
+| 功能 | 本系统角色 |
+|------|------------|
+| 知识抽取 | 核心 LLM 处理 |
+| 图谱构建 | FalkorDB/JSON |
+| Skills 生成 | 标准格式输出 |
+| 安全审查 | Constitutional AI |
+
+---
+
+## 20. 交付检查清单（给 Agent Team）
+
+### 原型阶段（必须）
+
+- [ ] LangGraph DAG 骨架可运行
+- [ ] URL → Ingestion → Markdown 流程
+- [ ] Knowledge Schema (Pydantic)
+- [ ] Entity + Relation Agent
+- [ ] Insight Agent（核心价值）
+- [ ] Validation + Repair Agent
+- [ ] Skills 文件生成（Markdown + YAML）
+- [ ] Human-in-Loop（强制，低置信度触发）
+- [ ] 安全审查（Constitutional AI 模式）
+
+### 生产准备（可选）
+
+- [ ] FalkorDB 替换 JSON Graph
+- [ ] MCP Server（官方 SDK）
+- [ ] Vector Store 集成
+- [ ] Temporal Graph
+
+### 未来迭代
+
+- [ ] Active Learning（LangGraph + LlamaIndex）
+- [ ] 多模态输入（GPT-4V/Whisper）
+- [ ] Neo4j 企业版支持
 
