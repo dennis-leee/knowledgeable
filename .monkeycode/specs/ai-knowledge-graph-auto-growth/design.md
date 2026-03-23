@@ -2,7 +2,7 @@
 
 Feature Name: ai-knowledge-graph-auto-growth
 Created: 2026-03-23
-Version: 0.2.0 (Draft - Enhanced)
+Version: 0.3.0 (Enhanced with LangGraph + GPT Best Practices)
 
 ---
 
@@ -13,9 +13,9 @@ Version: 0.2.0 (Draft - Enhanced)
 | 版本 | 日期 | 更新内容 |
 |------|------|----------|
 | 0.1.0 | 2026-03-23 | 初始版本 |
-| 0.2.0 | 2026-03-23 | 整合 Self-Reflection、Entity Linking、Hybrid Retrieval、Enhanced Self-Healing、Knowledge Gap Detection |
+| 0.3.0 | 2026-03-23 | 整合 LangGraph 编排 + JSON graph 轻量存储 + GPT 方案优点 |
 
-### 1.1 整体架构图
+### 1.1 整体架构图（LangGraph 编排 + 轻量存储）
 
 ```mermaid
 graph TB
@@ -27,20 +27,24 @@ graph TB
     subgraph Adapter Layer
         URL_Adapter[URL Adapter]
         PDF_Adapter[PDF Adapter]
-        Image_Adapter[Image Adapter]
-        Audio_Adapter[Audio Adapter]
+        Multimodal_Adapter[Multimodal Adapter]
     end
 
-    subgraph Core Processing Layer
-        Content_Normalizer[Content Normalizer]
-        AI_Analyzer[AI Analyzer]
-        Knowledge_Extractor[Knowledge Extractor]
-        Security_Reviewer[Security Reviewer]
-        Human_InLoop[Human In-Loop Handler]
+    subgraph LangGraph Orchestration
+        INGESTION[Ingestion Agent]
+        SUMMARIZER[Summarizer Agent]
+        ENTITY[Entity Agent]
+        RELATION[Relation Agent]
+        INSIGHT[Insight Agent]
+        STRUCTURING[Structuring Agent]
+        VALIDATION[Validation Agent]
+        REPAIR[Repair Agent]
+        MEMORY[Memory Agent]
+        SKILLS[Skills Agent]
     end
 
     subgraph Storage Layer
-        Graph_DB[(Graph Database)]
+        JSON_Graph[(JSON Graph)]
         Vector_Store[(Vector Store)]
         File_System[File System]
         Config_Store[Config Store]
@@ -50,7 +54,6 @@ graph TB
         Graph_Visualizer[Knowledge Graph Visualizer]
         Skill_Generator[Skill Generator]
         MCP_Server[MCP Server Generator]
-        Report_Generator[Report Generator]
     end
 
     subgraph Intelligence Layer
@@ -61,24 +64,29 @@ graph TB
 
     URL_Input --> URL_Adapter
     Multi_Modal_Input --> Adapter_Layer
-    PDF_Adapter --> Content_Normalizer
-    Image_Adapter --> Content_Normalizer
-    URL_Adapter --> Content_Normalizer
-    Content_Normalizer --> AI_Analyzer
-    AI_Analyzer --> Knowledge_Extractor
-    Knowledge_Extractor --> Security_Reviewer
-    Security_Reviewer -->|Pass| Graph_DB
-    Security_Reviewer -->|Block| Human_InLoop
-    Human_InLoop -->|Approve| Graph_DB
-    Human_InLoop -->|Reject| Audit_Logger
-    Graph_DB --> Graph_Visualizer
-    Graph_DB --> Skill_Generator
-    Skill_Generator --> File_System
-    File_System --> MCP_Server
-    Active_Learner -->|Learn| Adapter_Layer
-    Active_Learner -->|Sync| Graph_DB
-    Self_Healer -->|Monitor| All_Components
+    URL_Adapter --> INGESTION
+    INGESTION --> SUMMARIZER
+    SUMMARIZER --> ENTITY
+    ENTITY --> RELATION
+    RELATION --> INSIGHT
+    INSIGHT --> STRUCTURING
+    STRUCTURING --> VALIDATION
+    VALIDATION -->|Pass| MEMORY
+    VALIDATION -->|Fail| REPAIR
+    REPAIR -->|Retry| VALIDATION
+    REPAIR -->|Max Retries| Human_InLoop[Human In-Loop]
+    MEMORY --> JSON_Graph
+    MEMORY --> Vector_Store
+    MEMORY --> SKILLS
+    SKILLS --> File_System
+    JSON_Graph --> Graph_Visualizer
+    Self_Healer -->|Monitor| All_Agents
 ```
+
+**核心优势：**
+- LangGraph 提供 DAG + 状态机，流程可视化，调试方便
+- JSON Graph 轻量原型，Neo4j 预留扩展
+- 每个 Agent 独立，可单独测试和替换
 
 ### 1.2 核心处理流程
 
@@ -117,116 +125,79 @@ sequenceDiagram
 
 ### 2.1 配置中心 (Configuration Manager)
 
-**职责：** 统一管理系统全部配置
+**职责：** 统一管理系统全部配置（单一 YAML 文件）
 
-**接口：**
-```python
-class ConfigManager:
-    def load(self, config_path: str = "config/config.yaml") -> Config
-    def get(self, key: str, default: Any = None) -> Any
-    def set(self, key: str, value: Any) -> None
-    def reload(self) -> None  # 热重载
-    def validate(self) -> ValidationResult
-```
-
-**配置结构 (config.yaml)：**
+**配置结构 (config.yaml) - 简化版：**
 ```yaml
-system:
-  name: "ai-knowledge-graph"
-  mode: "development"  # development | production | minimal
-  log_level: "INFO"
+# 核心模型配置
+model:
+  summarizer: "gpt-4o-mini"
+  extractor: "gpt-4o"
+  embedding: "text-embedding-3-small"
 
-url_fetch:
-  timeout: 30
-  max_content_size: 1048576  # 1MB
-  user_agents:
-    - "Mozilla/5.0 (compatible; KnowledgeBot/1.0)"
-  retry_count: 3
-  retry_delay: 2.0
+# Pipeline 配置
+pipeline:
+  max_tokens: 8000
+  retry_limit: 3
+  fallback_parsers:
+    - "jina-reader"
+    - "readability-lxml"
 
-ai_analysis:
-  provider: "openai"  # openai | anthropic | local
-  model: "gpt-4o-mini"
-  api_key_env: "OPENAI_API_KEY"
-  temperature: 0.3
-  max_tokens: 4096
-  timeout: 60
-  confidence_threshold: 0.6
+# 置信度阈值
+confidence:
+  threshold: 0.7
+  low_confidence_action: "human_review"  # human_review | auto_approve | discard
 
-knowledge_graph:
-  database:
-    type: "neo4j"  # neo4j | tidb
-    uri: "bolt://localhost:7687"
-    username: "neo4j"
-    password_env: "NEO4J_PASSWORD"
-  node_types:
-    - "concept"
-    - "entity"
-    - "event"
-    - "claim"
-    - "relation"
-  edge_types:
-    - "implies"
-    - "causes"
-    - "similar_to"
-    - "contrasts"
-    - "part_of"
-    - "happens_before"
-  merge_threshold: 0.9
+# 存储配置
+storage:
+  markdown_path: "./data/md"
+  graph_path: "./data/graph"
+  skills_path: "./data/skills"
+  vector_store: "chroma"  # chroma | qdrant
+  vector_persist: "./data/vectors"
+  # 预留 Neo4j（原型阶段使用 JSON Graph）
+  # neo4j_uri: "bolt://localhost:7687"
 
-skill_generator:
-  output_dir: "output/skills"
-  format: "json"  # json | yaml
-  version_scheme: "semver"
-  mcp_compatible: true
-
-security_review:
+# 安全审查
+security:
   enabled: true
   blacklist:
-    harmful:
-      - "violence"
-      - "crime"
-      - "illegal"
-    privacy:
-      - "pii"
-      - "personal_data"
-    misleading:
-      - "disinformation"
-      - "conspiracy"
-  action_on_match: "flag"  # flag | block | approve
-  require_secondary_review: false
+    harmful: ["violence", "crime", "illegal"]
+    privacy: ["pii", "personal_data"]
+    misleading: ["disinformation", "conspiracy"]
+  action_on_match: "flag"  # flag | block
 
+# 人类介入
 human_inloop:
-  pending_review_dir: "pending_review"
-  confidence_threshold: 0.6
-  merge_ambiguity_range: [0.7, 0.9]
+  enabled: true
+  pending_review_dir: "./pending_review"
   auto_continue_on_timeout: false
   timeout_hours: 72
 
+# 主动学习（预留）
 active_learning:
   enabled: false
-  trigger:
-    type: "scheduled"  # scheduled | token_budget | goal_based
-    cron: "0 2 * * *"  # 每天凌晨2点
-    token_daily_limit: 100000
+  trigger: "scheduled"  # scheduled | token_budget | goal_based
+  cron: "0 2 * * *"
+  token_daily_limit: 100000
   require_approval: true
   termination_file: ".stop_learning"
-  search_engines:
-    - "arxiv"
-    - "google_scholar"
-    - "duckduckgo"
 
+# 自愈配置
 self_healing:
   enabled: true
   max_retries: 3
-  backoff_multiplier: 2.0
-  error_log: "logs/error_recovery.jsonl"
-
-storage:
-  graph_db: "data/graph.db"
-  vector_store: "data/vectors"
-  cache: "data/cache"
+  # 外部验证（CRAG 预留）
+  external_verification:
+    enabled: false
+    trigger_threshold: 0.6
+    provider: "duckduckgo"
 ```
+
+**设计说明：**
+- 单一 YAML 文件，减少配置复杂度
+- 向后兼容：Neo4j/Qdrant 预留配置项，原型阶段使用轻量方案
+- 人类介入最小化：仅在低置信度时触发
 
 ---
 
@@ -261,6 +232,98 @@ class ExtractedContent:
     links: List[str]
     language: str
     publish_date: Optional[str]
+```
+
+---
+
+## 2.2 LangGraph DAG 定义（核心编排）
+
+**DAG 流程：**
+```mermaid
+flowchart LR
+    START([URL]) --> INGESTION
+    INGESTION --> SUMMARIZER
+    SUMMARIZER --> ENTITY
+    ENTITY --> RELATION
+    RELATION --> INSIGHT
+    INSIGHT --> STRUCTURING
+    STRUCTURING --> VALIDATION
+    VALIDATION -->|Pass| MEMORY
+    VALIDATION -->|Fail| REPAIR
+    REPAIR -->|Retry| VALIDATION
+    REPAIR -->|Max Retries| HUMAN[Human In-Loop]
+    MEMORY --> SKILLS
+    SKILLS --> END([Output])
+    HUMAN -->|Approve| MEMORY
+    HUMAN -->|Reject| DISCARD
+```
+
+**LangGraph 代码框架：**
+```python
+# app/orchestrator/graph.py
+from langgraph.graph import StateGraph, END
+
+def create_pipeline() -> StateGraph:
+    workflow = StateGraph(PipelineState)
+    
+    # 添加节点
+    workflow.add_node("ingestion", ingestion_agent.run)
+    workflow.add_node("summarizer", summarizer_agent.run)
+    workflow.add_node("entity", entity_agent.run)
+    workflow.add_node("relation", relation_agent.run)
+    workflow.add_node("insight", insight_agent.run)
+    workflow.add_node("structuring", structuring_agent.run)
+    workflow.add_node("validation", validation_agent.run)
+    workflow.add_node("repair", repair_agent.run)
+    workflow.add_node("memory", memory_agent.run)
+    workflow.add_node("skills", skills_agent.run)
+    
+    # 定义边
+    workflow.add_edge("ingestion", "summarizer")
+    workflow.add_edge("summarizer", "entity")
+    workflow.add_edge("entity", "relation")
+    workflow.add_edge("relation", "insight")
+    workflow.add_edge("insight", "structuring")
+    workflow.add_edge("structuring", "validation")
+    workflow.add_edge("validation", "memory", condition=lambda s: s["validated"])
+    workflow.add_edge("validation", "repair", condition=lambda s: not s["validated"])
+    workflow.add_edge("repair", "validation")  # 重试
+    workflow.add_edge("memory", "skills")
+    workflow.add_edge("skills", END)
+    
+    # 条件边：超过重试次数则人类介入
+    def should_human介入(state):
+        return state["retry_count"] >= config["pipeline"]["retry_limit"]
+    
+    workflow.add_conditional_edges(
+        "repair",
+        should_human介入,
+        {"human": "human_inloop", "retry": "validation"}
+    )
+    
+    return workflow.compile()
+
+# 入口
+app = create_pipeline()
+result = app.invoke({"url": "https://example.com"})
+```
+
+**每个 Agent 的统一接口：**
+```python
+class BaseAgent(ABC):
+    @abstractmethod
+    def run(self, state: PipelineState) -> PipelineState:
+        """每个 Agent 必须实现的接口"""
+        pass
+    
+    def call_llm(self, prompt: str, schema: Type[BaseModel]) -> BaseModel:
+        """统一 LLM 调用"""
+        response = openai.chat.completions.create(
+            model=self.config["model"]["extractor"],
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object", "schema": schema.model_json_schema()}
+        )
+        return schema.model_validate_json(response.choices[0].message.content)
 ```
 
 ---
@@ -388,6 +451,88 @@ class KnowledgeGraphBuilder:
     async def query_hybrid(self, query: str, vector_store: VectorStore) -> HybridResult  # 新增
     async def get_subgraph(self, node_id: str, depth: int) -> SubGraph
     async def export(self, format: str) -> bytes
+```
+
+**数据模型（整合版 - LangGraph State + Pydantic）：**
+
+**LangGraph PipelineState：**
+```python
+# app/orchestrator/state.py
+class PipelineState(TypedDict):
+    url: str
+    raw_text: str
+    summary: str
+    sections: List[str]
+    entities: List[Entity]
+    relations: List[Relation]
+    insights: List[Insight]
+    knowledge: Optional[Knowledge]
+    validated: bool
+    retry_count: int
+    error: Optional[str]
+```
+
+**核心 Knowledge Schema（Pydantic）：**
+```python
+# app/schemas/knowledge.py
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from datetime import datetime
+
+class Entity(BaseModel):
+    name: str
+    type: str  # Concept / Person / Tool / Method / Organization
+    description: Optional[str] = None
+    aliases: List[str] = []  # Entity Linking 用
+
+class Relation(BaseModel):
+    source: str  # 源实体名
+    target: str  # 目标实体名
+    type: str  # uses / enhances / depends_on / contrasts / implies
+    confidence: float = Field(ge=0.0, le=1.0)
+    evidence: Optional[List[str]] = None
+
+class Insight(BaseModel):
+    text: str  # 非显性信息
+    insight_type: str  # implication / prediction / comparison / pattern
+    confidence: float = Field(ge=0.0, le=1.0)
+    supporting_entities: List[str] = []
+
+class Knowledge(BaseModel):
+    id: str  # UUID + 内容指纹
+    title: str
+    summary: str  # 核心摘要
+    sections: List[str]  # 分段总结
+    entities: List[Entity]
+    relations: List[Relation]
+    insights: List[Insight]
+    tags: List[str]
+    source: str  # URL
+    created_at: datetime
+    confidence: float = Field(ge=0.0, le=1.0)
+    
+    # Entity Linking
+    canonical_entities: Dict[str, str] = {}  # alias -> canonical_id
+    
+    # 预留字段
+    metadata: Dict = {}
+```
+
+**Skill Schema：**
+```python
+# app/schemas/skill.py
+class Skill(BaseModel):
+    name: str  # kebab-case: explain-xxx
+    version: str  # semver
+    description: str
+    category: str  # knowledge / tool / method
+    tags: List[str]
+    parameters: dict  # JSON Schema
+    actions: List[dict]  # 操作步骤
+    examples: List[dict]  # 使用示例
+    context_refs: List[str]  # 关联的 Knowledge IDs
+    confidence: float
+    generated_at: datetime
 ```
 
 **数据模型：**
@@ -684,74 +829,53 @@ self_healing:
 
 ---
 
-## 3. 目录结构
+## 3. 目录结构（LangGraph + Agent 模式）
 
 ```
-ai-knowledge-graph/
-├── config/
-│   └── config.yaml              # 主配置文件
-├── src/
-│   ├── __init__.py
-│   ├── main.py                  # 入口文件
-│   ├── config/
-│   │   ├── __init__.py
-│   │   └── manager.py           # 配置管理器
-│   ├── adapters/
-│   │   ├── __init__.py
-│   │   ├── base.py              # Base Adapter
-│   │   ├── url_adapter.py       # URL 抓取
-│   │   ├── pdf_adapter.py       # PDF 解析
-│   │   └── multimodal_adapter.py # 多模态
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── analyzer.py          # AI 分析器 (含 Self-Reflection)
-│   │   ├── extractor.py         # 知识提取器
-│   │   ├── normalizer.py        # 内容规范化
-│   │   └── entity_linker.py    # Entity Linker (新增)
-│   ├── graph/
-│   │   ├── __init__.py
-│   │   ├── builder.py           # 图谱构建器
-│   │   ├── query.py             # 图谱查询
-│   │   ├── hybrid_query.py      # Hybrid Query Engine (新增)
-│   │   └── visualizer.py        # 可视化
-│   ├── generation/
-│   │   ├── __init__.py
-│   │   ├── skill_generator.py   # Skill 生成
-│   │   └── mcp_server.py        # MCP Server 生成
-│   ├── security/
-│   │   ├── __init__.py
-│   │   ├── reviewer.py          # 安全审查
-│   │   └── blacklist.py         # 黑名单管理
-│   ├── intelligence/
-│   │   ├── __init__.py
-│   │   ├── active_learner.py     # 主动学习 (含 Gap Detection)
-│   │   ├── self_healer.py      # 自愈引擎 (增强版)
-│   │   └── error_classifier.py # 错误分类器 (新增)
-│   ├── human_inloop/
-│   │   ├── __init__.py
-│   │   ├── handler.py           # 人工介入处理
-│   │   └── pending_queue.py     # 待审核队列
-│   └── storage/
-│       ├── __init__.py
-│       ├── graph_db.py          # 图数据库
-│       ├── vector_store.py      # 向量存储
-│       └── cache.py             # 缓存
-├── output/
-│   ├── skills/                  # 生成的 Skills
-│   │   └── {category}/
-│   ├── graph/                   # 知识图谱导出
-│   │   ├── json/
-│   │   └── html/
-│   └── mcp_server/              # MCP Server 定义
-├── pending_review/              # 待人工审核
+knowledge-os/
+├── app/
+│   ├── main.py                    # 入口文件
+│   ├── config.yaml                # 唯一配置文件
+│   ├── orchestrator/
+│   │   ├── graph.py              # LangGraph DAG 定义
+│   │   └── state.py              # PipelineState 状态定义
+│   ├── agents/
+│   │   ├── ingestion.py           # Ingestion Agent (URL → raw text)
+│   │   ├── summarizer.py          # Summarizer Agent (分段总结)
+│   │   ├── entity.py              # Entity Agent (实体抽取)
+│   │   ├── relation.py            # Relation Agent (关系抽取)
+│   │   ├── insight.py             # Insight Agent (洞察提取 - 核心价值)
+│   │   ├── structuring.py        # Structuring Agent (组装 Knowledge)
+│   │   ├── validation.py         # Validation Agent (质量检查)
+│   │   ├── repair.py             # Repair Agent (LLM 自修复)
+│   │   ├── memory.py             # Memory Agent (存储写入)
+│   │   └── skills.py            # Skills Agent (生成 Skills)
+│   ├── schemas/
+│   │   ├── knowledge.py           # Knowledge Schema (核心数据结构)
+│   │   └── skill.py              # Skill Schema
+│   ├── storage/
+│   │   ├── markdown.py            # Markdown 文件存储
+│   │   ├── vector.py             # Vector Store (Chroma)
+│   │   └── graph.py              # JSON Graph 存储
+│   ├── utils/
+│   │   ├── llm.py                # LLM 统一接口
+│   │   ├── retry.py              # 重试机制
+│   │   └── confidence.py         # 置信度计算
+│   └── prompts/
+│       ├── summarizer.txt         # Summarizer Prompt
+│       ├── entity.txt             # Entity Prompt
+│       ├── relation.txt           # Relation Prompt
+│       ├── insight.txt            # Insight Prompt
+│       └── repair.txt             # Repair Prompt
+├── data/
+│   ├── md/                       # Markdown 输出
+│   ├── graph/                    # JSON Graph 输出
+│   ├── skills/                   # Skills JSON 输出
+│   └── vectors/                  # Chroma 向量存储
+├── pending_review/               # 待人工审核
 ├── logs/
 │   ├── error_recovery.jsonl
-│   ├── security_review.jsonl
-│   └── active_learning.jsonl
-├── data/
-│   ├── graph.db/
-│   ├── vectors/
-│   └── cache/
+│   └── security_review.jsonl
 ├── tests/
 │   ├── unit/
 │   ├── integration/
@@ -760,6 +884,12 @@ ai-knowledge-graph/
 ├── requirements.txt
 └── README.md
 ```
+
+**设计说明：**
+- **LangGraph DAG**：每个 Agent 是节点，state 是边上的数据
+- **独立 prompts**：便于调试和迭代
+- **JSON Graph 优先**：原型阶段减少 Neo4j 依赖
+- **Chroma 轻量**：原型阶段向量存储首选
 
 ---
 
