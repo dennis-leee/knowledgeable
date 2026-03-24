@@ -12,11 +12,13 @@ from app.utils.llm import get_llm_interface
 class RelationAgent(BaseAgent):
     """Agent for extracting relations between entities."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Dict[str, Any] = None, stream_callback: callable = None):
         """Initialize relation agent."""
         super().__init__(config)
-        self.llm = get_llm_interface(model=self.config.get("model", "gpt-4o"))
-        self.max_tokens = self.config.get("max_tokens", 8000)
+        model = self.config.get("relation", "openrouter/free") if isinstance(self.config, dict) else "openrouter/free"
+        self.llm = get_llm_interface(model=model)
+        self.max_tokens = self.config.get("max_tokens", 8000) if isinstance(self.config, dict) else 8000
+        self.stream_callback = stream_callback
 
     async def run(self, state: PipelineState) -> PipelineState:
         """Extract relations from content and entities."""
@@ -25,6 +27,9 @@ class RelationAgent(BaseAgent):
         if not raw_text or not entities:
             state["relations"] = []
             return state
+
+        if self.stream_callback:
+            await self.stream_callback("relation", "正在分析实体间关系...\n")
 
         try:
             entity_names = [e.get("name", "") for e in entities if e.get("name")]
@@ -36,10 +41,16 @@ class RelationAgent(BaseAgent):
 
             response = await self.llm.call(prompt)
 
+            if self.stream_callback:
+                await self.stream_callback("relation", "关系分析完成...\n")
+
             result = json.loads(response.content)
             relations = result.get("relations", [])
 
             state["relations"] = relations
+
+            if self.stream_callback:
+                await self.stream_callback("relation", f"共发现 {len(relations)} 条关系\n")
 
         except json.JSONDecodeError:
             state["relations"] = self._extract_simple_relations(raw_text, entities)

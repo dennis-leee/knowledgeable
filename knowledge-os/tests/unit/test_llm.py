@@ -17,10 +17,11 @@ class TestLLMInterface:
     @pytest.mark.asyncio
     async def test_call_without_api_key(self, llm):
         """Test LLM call without API key returns mock response."""
-        with patch.object(llm, '_get_api_key', return_value=None):
-            response = await llm.call("Test prompt")
-            assert response.content is not None
-            assert response.mock is True
+        llm.api_key = None
+        llm.provider = "mock"
+        response = await llm.call("Test prompt")
+        assert response.content is not None
+        assert response.raw.get("mock") is True
 
     @pytest.mark.asyncio
     async def test_call_with_schema(self, llm):
@@ -31,9 +32,10 @@ class TestLLMInterface:
             name: str
             value: int
 
-        with patch.object(llm, '_get_api_key', return_value=None):
-            response = await llm.call("Test prompt", schema=TestSchema)
-            assert response.content is not None
+        llm.api_key = None
+        llm.provider = "mock"
+        response = await llm.call("Test prompt", schema=TestSchema)
+        assert response.content is not None
 
     def test_get_api_key_from_env(self, llm):
         """Test getting API key from environment."""

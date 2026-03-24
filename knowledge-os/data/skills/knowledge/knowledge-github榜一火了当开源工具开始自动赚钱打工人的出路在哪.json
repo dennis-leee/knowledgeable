@@ -1,14 +1,14 @@
 {
   "name": "knowledge-github榜一火了当开源工具开始自动赚钱打工人的出路在哪",
   "version": "1.0.0",
-  "description": "Provides knowledge about GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？. GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？\n原创\ndoup智能AI\ndoup智能AI\ndoup智能AI\n在小说阅读器中沉浸阅读\n「让机器替你打工」这件事，终于有人把它做成了开源项目。\n01 MoneyPrinterV2：名字就叫「印钞机」\n这大概是GitHub史上最直白的项目名了。\nMoneyPrinterV2\n，星数17,912，今日再涨283颗。核心功能就一句话：\n自动化",
+  "description": "Provides knowledge about GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？. GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？\n「让机器替你打工」这件事，终于有人把它做成了开源项目。\n01 MoneyPrinterV2：名字就叫「印钞机」\n这大概是GitHub史上最直白的项目名了。\nMoneyPrinterV2\n，星数17,912，今日再涨283颗。核心功能就一句话：\n自动化在线赚钱\n它能做什么？内容生成、SEO优化、联盟营销自动化……把那些你需要花8小时完",
   "category": "knowledge",
   "tags": [
-    "doup智能ai",
-    "trivy",
-    "project",
     "crosstalk",
-    "github榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？"
+    "moneyprinterv2：名字就叫「印钞机」",
+    "github榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？",
+    "solutions",
+    "这大概是github史上最直白的项目名了。"
   ],
   "parameters": {
     "type": "object",
@@ -42,7 +42,7 @@
   "examples": [
     {
       "input": "What is GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？?",
-      "output": "GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？\n原创\ndoup智能AI\ndoup智能AI\ndoup智能AI\n在小说阅读器中沉浸阅读\n「让机器替你打工」这件事，终于有人把它做成了开源项目。\n01 MoneyPrinterV2：名字就叫「印钞机」\n这大概是GitHub史上最直白的项目名了。\nMoneyPrinterV2\n，星数17,912，今日再涨283颗。核心功能就一句话：\n自动化在线赚钱\n。\n它能做什么？内容生成、SEO优化、联盟营销自动化……把那些你需要花8小时完成的重复性工作，压缩到几分钟内完成。\n📍 应用场景：\n自媒体矩阵运营、跨境电商、被动收入项目搭建\n💰 商业价值：\n一个人=一支团队，运营成本降低90%\n🔗 项目地址：\ngithub. com/FujiwaraChoki/MoneyPrinterV2\n有人说这是「作弊」，有人说是「效率革命」。但不可否认，工具正在重新定义「劳动」。\n02 Project N. O. M. A."
+      "output": "GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？\n「让机器替你打工」这件事，终于有人把它做成了开源项目。\n01 MoneyPrinterV2：名字就叫「印钞机」\n这大概是GitHub史上最直白的项目名了。\nMoneyPrinterV2\n，星数17,912，今日再涨283颗。核心功能就一句话：\n自动化在线赚钱\n它能做什么？内容生成、SEO优化、联盟营销自动化……把那些你需要花8小时完成的重复性工作，压缩到几分钟内完成。\n📍 应用场景：\n自媒体矩阵运营、跨境电商、被动收入项目搭建\n💰 商业价值：\n一个人=一支团队，运营成本降低90%\n🔗 项目地址：\ngithub. com/FujiwaraChoki/MoneyPrinterV2\n有人说这是「作弊」，有人说是「效率革命」。但不可否认，工具正在重新定义「劳动」。\n02 Project N. O. M. A."
     },
     {
       "input": "Tell me about Project",
@@ -50,11 +50,11 @@
     }
   ],
   "context_refs": [
-    "knowledge:61af9374a8588967"
+    "knowledge:3e81331b26cf8535"
   ],
   "confidence": 0.7000000000000001,
-  "generated_at": "2026-03-24T07:22:37.011452",
+  "generated_at": "2026-03-24T09:46:17.193364",
   "source_knowledge_ids": [
-    "61af9374a8588967"
+    "3e81331b26cf8535"
   ]
 }

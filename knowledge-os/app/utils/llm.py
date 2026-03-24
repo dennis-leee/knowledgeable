@@ -24,15 +24,19 @@ class LLMError(Exception):
 class LLMInterface:
     """Unified LLM interface for making calls."""
 
-    def __init__(self, model: str = "gpt-4o-mini", api_key: Optional[str] = None):
+    def __init__(self, model: str = "gpt-4o-mini", api_key: Optional[str] = None, provider: str = "openai"):
         """Initialize LLM interface."""
         self.model = model
         self.api_key = api_key or self._get_api_key()
+        self.provider = provider
 
     def _get_api_key(self) -> Optional[str]:
         """Get API key from environment."""
         import os
 
+        if os.environ.get("OPENAI_API_KEY", "").startswith("sk-or-"):
+            self.provider = "openrouter"
+            return os.environ.get("OPENAI_API_KEY")
         return os.environ.get("OPENAI_API_KEY")
 
     async def call(
@@ -52,6 +56,8 @@ class LLMInterface:
                 headers = {
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json",
+                    "HTTP-Referer": "https://knowledge-os.local",
+                    "X-Title": "Knowledge OS",
                 }
 
                 payload = {
@@ -68,11 +74,12 @@ class LLMInterface:
                     }
 
                 async with httpx.AsyncClient() as client:
+                    base_url = os.environ.get("OPENAI_API_BASE", "https://openrouter.ai/api/v1")
                     response = await client.post(
-                        "https://api.openai.com/v1/chat/completions",
+                        f"{base_url}/chat/completions",
                         headers=headers,
                         json=payload,
-                        timeout=60.0,
+                        timeout=120.0,
                     )
                     response.raise_for_status()
                     data = response.json()

@@ -75,6 +75,52 @@
         "aliases": [],
         "confidence": 0.5
       }
+    },
+    {
+      "id": "6aea77ac5bb111fe",
+      "type": "knowledge",
+      "label": "GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？",
+      "data": {
+        "summary": "GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？\n「让机器替你打工」这件事，终于有人把它做成了开源项目。\n01 MoneyPrinterV2：名字就叫「印钞机」\n这大概是GitHub史上最直白的项目名了。\nMoneyPrinterV2\n，星数17,912，今日再涨283颗。核心功能就一句话：\n自动化在线赚钱\n它能做什么？内容生成、SEO优化、联盟营销自动化……把那些你需要花8小时完成的重复性工作，压缩到几分钟内完成。\n📍 应用场景：\n自媒体矩阵运营、跨境电商、被动收入项目搭建\n💰 商业价值：\n一个人=一支团队，运营成本降低90%\n🔗 项目地址：\ngithub. com/FujiwaraChoki/MoneyPrinterV2\n有人说这是「作弊」，有人说是「效率革命」。但不可否认，工具正在重新定义「劳动」。\n02 Project N. O. M. A.",
+        "source": "https://mp.weixin.qq.com/s/bjnfQg30wOSFDtv_l6NvWA?scene=1&click_id=129",
+        "source_url": "https://mp.weixin.qq.com/s/bjnfQg30wOSFDtv_l6NvWA?scene=1&click_id=129",
+        "confidence": 0.7000000000000001,
+        "tags": [
+          "「让机器替你打工」这件事，终于有人把它做成了开源项目。",
+          "这大概是github史上最直白的项目名了。",
+          "solutions",
+          "moneyprinterv2：名字就叫「印钞机」",
+          "crosstalk",
+          "claude",
+          "trivy",
+          "github榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？",
+          "project"
+        ],
+        "created_at": "2026-03-24T09:36:44.697589"
+      }
+    },
+    {
+      "id": "3e81331b26cf8535",
+      "type": "knowledge",
+      "label": "GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？",
+      "data": {
+        "summary": "GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？\n「让机器替你打工」这件事，终于有人把它做成了开源项目。\n01 MoneyPrinterV2：名字就叫「印钞机」\n这大概是GitHub史上最直白的项目名了。\nMoneyPrinterV2\n，星数17,912，今日再涨283颗。核心功能就一句话：\n自动化在线赚钱\n它能做什么？内容生成、SEO优化、联盟营销自动化……把那些你需要花8小时完成的重复性工作，压缩到几分钟内完成。\n📍 应用场景：\n自媒体矩阵运营、跨境电商、被动收入项目搭建\n💰 商业价值：\n一个人=一支团队，运营成本降低90%\n🔗 项目地址：\ngithub. com/FujiwaraChoki/MoneyPrinterV2\n有人说这是「作弊」，有人说是「效率革命」。但不可否认，工具正在重新定义「劳动」。\n02 Project N. O. M. A.",
+        "source": "https://mp.weixin.qq.com/s/bjnfQg30wOSFDtv_l6NvWA?scene=1&click_id=129",
+        "source_url": "https://mp.weixin.qq.com/s/bjnfQg30wOSFDtv_l6NvWA?scene=1&click_id=129",
+        "confidence": 0.7000000000000001,
+        "tags": [
+          "crosstalk",
+          "moneyprinterv2：名字就叫「印钞机」",
+          "github榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？",
+          "solutions",
+          "这大概是github史上最直白的项目名了。",
+          "trivy",
+          "claude",
+          "「让机器替你打工」这件事，终于有人把它做成了开源项目。",
+          "project"
+        ],
+        "created_at": "2026-03-24T09:46:16.570781"
+      }
     }
   ],
   "edges": [
@@ -107,11 +153,71 @@
       "source": "61af9374a8588967",
       "target": "entity:Trivy",
       "type": "contains"
+    },
+    {
+      "id": "edge:6aea77ac5bb111fe:entity:Project",
+      "source": "6aea77ac5bb111fe",
+      "target": "entity:Project",
+      "type": "contains"
+    },
+    {
+      "id": "edge:6aea77ac5bb111fe:entity:Crosstalk",
+      "source": "6aea77ac5bb111fe",
+      "target": "entity:Crosstalk",
+      "type": "contains"
+    },
+    {
+      "id": "edge:6aea77ac5bb111fe:entity:Solutions",
+      "source": "6aea77ac5bb111fe",
+      "target": "entity:Solutions",
+      "type": "contains"
+    },
+    {
+      "id": "edge:6aea77ac5bb111fe:entity:Claude",
+      "source": "6aea77ac5bb111fe",
+      "target": "entity:Claude",
+      "type": "contains"
+    },
+    {
+      "id": "edge:6aea77ac5bb111fe:entity:Trivy",
+      "source": "6aea77ac5bb111fe",
+      "target": "entity:Trivy",
+      "type": "contains"
+    },
+    {
+      "id": "edge:3e81331b26cf8535:entity:Project",
+      "source": "3e81331b26cf8535",
+      "target": "entity:Project",
+      "type": "contains"
+    },
+    {
+      "id": "edge:3e81331b26cf8535:entity:Crosstalk",
+      "source": "3e81331b26cf8535",
+      "target": "entity:Crosstalk",
+      "type": "contains"
+    },
+    {
+      "id": "edge:3e81331b26cf8535:entity:Solutions",
+      "source": "3e81331b26cf8535",
+      "target": "entity:Solutions",
+      "type": "contains"
+    },
+    {
+      "id": "edge:3e81331b26cf8535:entity:Claude",
+      "source": "3e81331b26cf8535",
+      "target": "entity:Claude",
+      "type": "contains"
+    },
+    {
+      "id": "edge:3e81331b26cf8535:entity:Trivy",
+      "source": "3e81331b26cf8535",
+      "target": "entity:Trivy",
+      "type": "contains"
     }
   ],
   "metadata": {
-    "updated_at": "2026-03-24T07:22:25.210718",
-    "node_count": 6,
-    "edge_count": 5
+    "updated_at": "2026-03-24T09:46:16.573835",
+    "node_count": 8,
+    "edge_count": 15
   }
 }

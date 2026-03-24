@@ -13,31 +13,47 @@ from app.utils.llm import get_llm_interface
 class EntityAgent(BaseAgent):
     """Agent for extracting entities from content."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Dict[str, Any] = None, stream_callback: callable = None):
         """Initialize entity agent."""
         super().__init__(config)
-        self.llm = get_llm_interface(model=self.config.get("model", "gpt-4o"))
-        self.max_tokens = self.config.get("max_tokens", 8000)
+        model = self.config.get("entity", "openrouter/free") if isinstance(self.config, dict) else "openrouter/free"
+        self.llm = get_llm_interface(model=model)
+        self.max_tokens = self.config.get("max_tokens", 8000) if isinstance(self.config, dict) else 8000
+        self.stream_callback = stream_callback
 
     async def run(self, state: PipelineState) -> PipelineState:
         """Extract entities from content."""
         raw_text = state.get("raw_text")
+        title = state.get("title", "")
         if not raw_text:
             state["entities"] = []
             return state
 
+        if self.stream_callback:
+            await self.stream_callback("entity", "正在识别文本中的实体...\n")
+
         try:
             prompt_template = load_prompt("entity")
-            prompt = prompt_template.format(content=raw_text[: self.max_tokens])
+            prompt = prompt_template.format(
+                title=title,
+                content=raw_text[: self.max_tokens]
+            )
 
             response = await self.llm.call(prompt)
+
+            if self.stream_callback:
+                await self.stream_callback("entity", "实体识别完成，正在去噪...\n")
 
             result = json.loads(response.content)
             entities = result.get("entities", [])
 
+            entities = self._denoise_entities(entities, title)
             entities = merge_duplicate_entities(entities)
 
             state["entities"] = entities
+
+            if self.stream_callback:
+                await self.stream_callback("entity", f"共识别出 {len(entities)} 个有效实体\n")
 
         except json.JSONDecodeError:
             state["entities"] = self._extract_simple_entities(raw_text)
@@ -46,6 +62,45 @@ class EntityAgent(BaseAgent):
             state["entities"] = self._extract_simple_entities(raw_text)
 
         return state
+
+    def _denoise_entities(self, entities: list, title: str = "") -> list:
+        """Remove noise entities that are likely navigation or generic words."""
+        title_lower = title.lower()
+
+        generic_words = {
+            "project", "solution", "ai", "data", "info", "news", "article",
+            "post", "page", "content", "home", "about", "contact", "help",
+            "menu", "nav", "header", "footer", "sidebar", "widget",
+            "login", "signin", "signup", "register", "password", "username",
+            "search", "filter", "sort", "view", "edit", "delete", "add",
+            "save", "cancel", "ok", "yes", "no", "confirm", "submit",
+            "next", "previous", "back", "forward", "close", "open",
+            "loading", "error", "success", "warning", "message", "alert",
+            "copyright", "terms", "privacy", "policy", "disclaimer",
+            "comments", "replies", "likes", "shares", "views",
+            "follow", "followers", "following", "share", "tweet", "retweet",
+        }
+
+        filtered = []
+        for entity in entities:
+            name = entity.get("name", "")
+            name_lower = name.lower()
+
+            if len(name) < 2:
+                continue
+
+            if name_lower in generic_words:
+                continue
+
+            if name_lower in title_lower:
+                continue
+
+            if name.count(' ') > 4:
+                continue
+
+            filtered.append(entity)
+
+        return filtered
 
     def _extract_simple_entities(self, text: str) -> List[Dict[str, Any]]:
         """Simple entity extraction using patterns."""

@@ -23,6 +23,8 @@ model:
 pipeline:
   max_tokens: 8000
   retry_limit: 3
+  fallback_parsers:
+    - "jina-reader"
 
 confidence:
   threshold: 0.7
@@ -50,15 +52,18 @@ security:
     def test_load_config(self, config_file):
         """Test loading configuration from file."""
         manager = ConfigManager()
+        manager._config = None
         config = manager.load(config_file)
         assert config is not None
         assert config.model.summarizer == "gpt-4o-mini"
         assert config.pipeline.max_tokens == 8000
+        assert config.pipeline.retry_limit == 3
         assert config.confidence.threshold == 0.7
 
     def test_get_with_dot_notation(self, config_file):
         """Test getting nested config values."""
         manager = ConfigManager()
+        manager._config = None
         manager.load(config_file)
         
         assert manager.get("model.summarizer") == "gpt-4o-mini"

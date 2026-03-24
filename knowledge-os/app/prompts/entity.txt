@@ -1,5 +1,7 @@
 You are an entity extraction expert. Identify and extract all significant entities from the following content.
 
+Context (article title): {title}
+
 Content:
 {content}
 
@@ -17,8 +19,15 @@ Please provide a JSON response with a list of entities:
 }}
 
 Requirements:
-- Extract all meaningful named entities
+- Extract meaningful named entities that are central to understanding the article topic
+- Use the title context to disambiguate entities and focus on relevant ones
+- Prioritize specific names (projects, tools, people, companies) over generic terms
 - Use precise type classification
-- Include aliases and abbreviations
+- Include aliases and abbreviations where relevant
 - Provide confidence scores (0.0-1.0)
-- Focus on entities relevant to understanding the main topic
+- Avoid extracting navigation menu items, UI elements, or generic English words
+
+Common pitfalls to avoid:
+- Do NOT extract generic words like "Project", "Solutions", "AI", "Data" as entities
+- Do NOT extract navigation elements or UI labels
+- Do NOT extract common English words that appear in menus or footers

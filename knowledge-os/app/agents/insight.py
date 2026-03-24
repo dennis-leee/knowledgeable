@@ -12,11 +12,13 @@ from app.utils.llm import get_llm_interface
 class InsightAgent(BaseAgent):
     """Agent for extracting non-obvious insights."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Dict[str, Any] = None, stream_callback: callable = None):
         """Initialize insight agent."""
         super().__init__(config)
-        self.llm = get_llm_interface(model=self.config.get("model", "gpt-4o"))
-        self.max_tokens = self.config.get("max_tokens", 8000)
+        model = self.config.get("insight", "openrouter/free") if isinstance(self.config, dict) else "openrouter/free"
+        self.llm = get_llm_interface(model=model)
+        self.max_tokens = self.config.get("max_tokens", 8000) if isinstance(self.config, dict) else 8000
+        self.stream_callback = stream_callback
 
     async def run(self, state: PipelineState) -> PipelineState:
         """Extract insights from content and entities."""
@@ -25,6 +27,9 @@ class InsightAgent(BaseAgent):
         if not raw_text:
             state["insights"] = []
             return state
+
+        if self.stream_callback:
+            await self.stream_callback("insight", "正在挖掘深层洞察...\n")
 
         try:
             entity_names = [e.get("name", "") for e in entities if e.get("name")]
@@ -36,10 +41,16 @@ class InsightAgent(BaseAgent):
 
             response = await self.llm.call(prompt)
 
+            if self.stream_callback:
+                await self.stream_callback("insight", "洞察提取完成...\n")
+
             result = json.loads(response.content)
             insights = result.get("insights", [])
 
             state["insights"] = insights
+
+            if self.stream_callback:
+                await self.stream_callback("insight", f"共提取 {len(insights)} 个洞察\n")
 
         except json.JSONDecodeError:
             state["insights"] = self._extract_simple_insights(raw_text, entities)

@@ -1,18 +1,23 @@
 model:
-  summarizer: "gpt-4o-mini"
-  extractor: "gpt-4o"
+  agents:
+    ingestion: "direct"
+    summarizer: "openrouter/free"
+    entity: "openrouter/free"
+    relation: "openrouter/free"
+    insight: "openrouter/free"
+    skills: "openrouter/free"
   embedding: "text-embedding-3-small"
 
 pipeline:
-  max_tokens: 8000
-  retry_limit: 3
+  max_tokens: 16000
+  retry_limit: 2
   fallback_parsers:
     - "jina-reader"
+    - "playwright"
     - "readability-lxml"
 
 confidence:
-  threshold: 0.7
-  low_confidence_action: "human_review"
+  threshold: 0.6
 
 storage:
   markdown_path: "./data/md"
@@ -20,33 +25,3 @@ storage:
   skills_path: "./data/skills"
   vector_store: "chroma"
   vector_persist: "./data/vectors"
-
-security:
-  enabled: true
-  blacklist:
-    harmful: ["violence", "crime", "illegal"]
-    privacy: ["pii", "personal_data"]
-    misleading: ["disinformation", "conspiracy"]
-  action_on_match: "flag"
-
-human_inloop:
-  enabled: true
-  pending_review_dir: "./pending_review"
-  auto_continue_on_timeout: false
-  timeout_hours: 72
-
-active_learning:
-  enabled: false
-  trigger: "scheduled"
-  cron: "0 2 * * *"
-  token_daily_limit: 100000
-  require_approval: true
-  termination_file: ".stop_learning"
-
-self_healing:
-  enabled: true
-  max_retries: 3
-  external_verification:
-    enabled: false
-    trigger_threshold: 0.6
-    provider: "duckduckgo"

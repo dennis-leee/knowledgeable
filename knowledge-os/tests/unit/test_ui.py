@@ -20,18 +20,18 @@ class TestUIFunctions:
 
     def test_display_knowledge_with_error(self):
         """Test display with error result."""
-        from app.ui import display_knowledge
+        from app.ui import display_result
 
         result = {"error": "Test error"}
         mock_st = MagicMock()
 
         with patch.object(st, 'error') as mock_error:
-            display_knowledge(result)
+            display_result(result)
             mock_error.assert_called_once()
 
     def test_display_knowledge_with_valid_result(self):
         """Test display with valid result."""
-        from app.ui import display_knowledge
+        from app.ui import display_result
 
         result = {
             "summary": "Test summary",
@@ -48,21 +48,20 @@ class TestUIFunctions:
             "validated": True,
         }
 
-        with patch.object(st, 'columns') as mock_columns, \
+        with patch.object(st, 'columns', return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()]) as mock_columns, \
              patch.object(st, 'subheader') as mock_subheader, \
              patch.object(st, 'write') as mock_write, \
              patch.object(st, 'metric') as mock_metric, \
-             patch.object(st, 'success') as mock_success:
+             patch.object(st, 'success') as mock_success, \
+             patch.object(st, 'divider') as mock_divider, \
+             patch.object(st, 'expander') as mock_expander, \
+             patch.object(st, 'markdown') as mock_markdown:
 
-            mock_col1 = MagicMock()
-            mock_col2 = MagicMock()
-            mock_columns.return_value = [mock_col1, mock_col2]
-
-            display_knowledge(result)
+            display_result(result)
 
     def test_display_knowledge_with_empty_entities(self):
         """Test display with empty entities."""
-        from app.ui import display_knowledge
+        from app.ui import display_result
 
         result = {
             "summary": "Test summary",
@@ -73,16 +72,15 @@ class TestUIFunctions:
             "validation_errors": ["No entities"],
         }
 
-        with patch.object(st, 'columns') as mock_columns, \
+        with patch.object(st, 'columns', return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()]) as mock_columns, \
              patch.object(st, 'subheader') as mock_subheader, \
-             patch.object(st, 'warning') as mock_warning:
+             patch.object(st, 'warning') as mock_warning, \
+             patch.object(st, 'divider') as mock_divider, \
+             patch.object(st, 'markdown') as mock_markdown, \
+             patch.object(st, 'metric') as mock_metric:
 
-            mock_col1 = MagicMock()
-            mock_col2 = MagicMock()
-            mock_columns.return_value = [mock_col1, mock_col2]
-
-            display_knowledge(result)
-            mock_warning.assert_called()
+            display_result(result)
+            mock_metric.assert_called()
 
 
 class TestUIState:
@@ -106,7 +104,7 @@ class TestEdgeCases:
 
     def test_very_long_summary(self):
         """Test handling of very long summaries."""
-        from app.ui import display_knowledge
+        from app.ui import display_result
 
         long_text = "A" * 1000
         result = {
@@ -116,13 +114,14 @@ class TestEdgeCases:
             "insights": [],
         }
 
-        with patch.object(st, 'columns') as mock_columns:
-            mock_columns.return_value = [MagicMock(), MagicMock()]
-            display_knowledge(result)
+        with patch.object(st, 'columns', return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()]) as mock_columns, \
+             patch.object(st, 'divider') as mock_divider, \
+             patch.object(st, 'markdown') as mock_markdown:
+            display_result(result)
 
     def test_special_characters_in_entities(self):
         """Test handling of special characters in entities."""
-        from app.ui import display_knowledge
+        from app.ui import display_result
 
         result = {
             "summary": "Test",
@@ -134,20 +133,22 @@ class TestEdgeCases:
             "insights": [],
         }
 
-        with patch.object(st, 'columns') as mock_columns:
-            mock_columns.return_value = [MagicMock(), MagicMock()]
-            display_knowledge(result)
+        with patch.object(st, 'columns', return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()]) as mock_columns, \
+             patch.object(st, 'divider') as mock_divider, \
+             patch.object(st, 'markdown') as mock_markdown, \
+             patch.object(st, 'expander') as mock_expander:
+            display_result(result)
 
     def test_missing_fields_in_result(self):
         """Test handling of missing fields in result."""
-        from app.ui import display_knowledge
+        from app.ui import display_result
 
         result = {}
 
-        with patch.object(st, 'columns') as mock_columns, \
+        with patch.object(st, 'columns', return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()]) as mock_columns, \
              patch.object(st, 'subheader') as mock_subheader, \
              patch.object(st, 'write') as mock_write, \
-             patch.object(st, 'error') as mock_error:
-
-            mock_columns.return_value = [MagicMock(), MagicMock()]
-            display_knowledge(result)
+             patch.object(st, 'error') as mock_error, \
+             patch.object(st, 'divider') as mock_divider, \
+             patch.object(st, 'markdown') as mock_markdown:
+            display_result(result)

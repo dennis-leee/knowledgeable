@@ -44,13 +44,13 @@ class KnowledgePipeline:
         self.memory_agent = MemoryAgent(config=storage_config)
         self.skills_agent = SkillsAgent(config=storage_config)
 
-    async def run(self, url: str, progress_callback=None) -> "PipelineState":
-        """Run the complete pipeline for a URL."""
+    async def run(self, url: str = None, text: str = None, progress_callback=None) -> "PipelineState":
+        """Run the complete pipeline for a URL or text."""
         from app.orchestrator.state import PipelineState
 
         state: "PipelineState" = {
-            "url": url,
-            "raw_text": "",
+            "url": url or "",
+            "raw_text": text or "",
             "title": "",
             "summary": "",
             "sections": [],
@@ -73,7 +73,13 @@ class KnowledgePipeline:
                 progress_callback(stage, progress)
 
         update_progress("ingestion", 10)
-        state = await self.ingestion_agent.run(state)
+
+        if text:
+            state["raw_text"] = text
+            state["title"] = self._extract_title_from_text(text)
+        else:
+            state = await self.ingestion_agent.run(state)
+
         if state.get("error") and not state.get("raw_text"):
             return state
 
@@ -131,3 +137,12 @@ class KnowledgePipeline:
             "skills": self.skills_agent,
         }
         return agents.get(name)
+
+    def _extract_title_from_text(self, text: str) -> str:
+        """Extract title from text content."""
+        lines = text.split("\n")
+        for line in lines[:20]:
+            line = line.strip()
+            if len(line) > 5 and len(line) < 200:
+                return line
+        return "Untitled"

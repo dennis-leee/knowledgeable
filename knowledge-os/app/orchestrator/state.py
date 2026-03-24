@@ -6,7 +6,7 @@ from typing_extensions import TypedDict
 
 
 class PipelineState(TypedDict, total=False):
-    """State passed through the LangGraph pipeline."""
+    """State passed through the pipeline."""
 
     url: str
     raw_text: str
@@ -25,3 +25,9 @@ class PipelineState(TypedDict, total=False):
     approved_by: Optional[str]
     pending_review: bool
     review_notes: Optional[str]
+    stored: bool
+    markdown_path: Optional[str]
+    skill_path: Optional[str]
+    key_points: List[Dict[str, Any]]
+    important_details: List[str]
+    takeaways: List[str]
