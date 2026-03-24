@@ -1,9 +1,12 @@
 """LLM utilities - unified interface for LLM calls."""
 
+import os
 import json
 from typing import Any, Dict, Optional, Type
 
 from pydantic import BaseModel
+
+GLOBAL_OPENROUTER_API_KEY: Optional[str] = None
 
 
 class LLMResponse(BaseModel):
@@ -21,6 +24,14 @@ class LLMError(Exception):
     pass
 
 
+def set_openrouter_api_key(api_key: str):
+    """Set global OpenRouter API key."""
+    global GLOBAL_OPENROUTER_API_KEY
+    GLOBAL_OPENROUTER_API_KEY = api_key
+    os.environ["OPENAI_API_KEY"] = api_key
+    os.environ["OPENAI_API_BASE"] = "https://openrouter.ai/api/v1"
+
+
 class LLMInterface:
     """Unified LLM interface for making calls."""
 
@@ -31,8 +42,12 @@ class LLMInterface:
         self.provider = provider
 
     def _get_api_key(self) -> Optional[str]:
-        """Get API key from environment."""
-        import os
+        """Get API key from environment or global."""
+        global GLOBAL_OPENROUTER_API_KEY
+
+        if GLOBAL_OPENROUTER_API_KEY:
+            self.provider = "openrouter"
+            return GLOBAL_OPENROUTER_API_KEY
 
         if os.environ.get("OPENAI_API_KEY", "").startswith("sk-or-"):
             self.provider = "openrouter"

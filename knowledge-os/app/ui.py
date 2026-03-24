@@ -4,6 +4,7 @@ import asyncio
 import streamlit as st
 from pathlib import Path
 import sys
+import json
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -26,6 +27,49 @@ def init_session_state():
         st.session_state.processing = False
     if "logs" not in st.session_state:
         st.session_state.logs = []
+    if "agent_models" not in st.session_state:
+        st.session_state.agent_models = {
+            "summarizer": "openrouter/free",
+            "entity": "openrouter/free",
+            "relation": "openrouter/free",
+            "insight": "openrouter/free",
+            "skills": "openrouter/free",
+        }
+        st.session_state.agent_models = {
+            "summarizer": "openrouter/free",
+            "entity": "openrouter/free",
+            "relation": "openrouter/free",
+            "insight": "openrouter/free",
+            "skills": "openrouter/free",
+        }
+
+
+def get_openrouter_free_models():
+    """Fetch free models from OpenRouter."""
+    try:
+        import httpx
+        api_key = st.session_state.get("openrouter_api_key", "")
+        if not api_key:
+            return ["openrouter/free"]
+        
+        headers = {"Authorization": f"Bearer {api_key}"}
+        response = httpx.get(
+            "https://openrouter.ai/api/v1/models",
+            headers=headers,
+            timeout=10.0
+        )
+        if response.status_code == 200:
+            data = response.json()
+            free_models = [
+                m["id"] for m in data.get("data", [])
+                if ":free" in m.get("id", "") or m.get("id", "").startswith("openrouter/")
+            ]
+            if not free_models:
+                free_models = ["openrouter/free"]
+            return ["openrouter/free"] + sorted(free_models)
+    except Exception:
+        pass
+    return ["openrouter/free"]
 
 
 AGENTS = [
@@ -41,12 +85,17 @@ AGENTS = [
 ]
 
 
-async def run_pipeline(url: str = None, text: str = None, progress_callback=None, stream_callback=None):
+async def run_pipeline(url: str = None, text: str = None, progress_callback=None, stream_callback=None, agent_models=None):
     """Run the simplified pipeline."""
     from app.orchestrator.simple_pipeline import SimplePipeline
 
     pipeline = SimplePipeline()
-    result = await pipeline.run(url=url, text=text, progress_callback=progress_callback, stream_callback=stream_callback)
+    result = await pipeline.run(
+        url=url, text=text,
+        progress_callback=progress_callback,
+        stream_callback=stream_callback,
+        agent_models=agent_models
+    )
     return result
 
 
@@ -131,8 +180,8 @@ def display_result(result: dict):
         st.success(f"📦 Skills 已生成: {result.get('skill_path')}")
 
 
-def render_agent_card(agent: dict, status: str, progress: int, message: str = ""):
-    """Render a single agent card."""
+def render_agent_card(agent: dict, status: str, progress: int, message: str = "", model_options: list = None, current_model: str = "openrouter/free", on_model_change=None):
+    """Render a single agent card with model selector."""
     status_colors = {
         "pending": "gray",
         "running": "blue",
@@ -149,31 +198,64 @@ def render_agent_card(agent: dict, status: str, progress: int, message: str = ""
     color = status_colors.get(status, "gray")
     icon = status_icons.get(status, "⏳")
 
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        st.markdown(f"**{icon} {agent['name']}**")
-        if message:
-            st.text(message[:150] + ("..." if len(message) > 150 else ""))
-    with col2:
-        if status == "running":
-            st.progress(progress, text=f"{progress}%")
-        else:
-            st.markdown(f"<span style='color:{color}'>{status.upper()}</span>", unsafe_allow_html=True)
+    is_llm_agent = agent["model"] != "direct"
 
-    st.divider()
+    with st.container():
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown(f"**{icon} {agent['name']}**")
+            if message:
+                st.text(message[:100] + ("..." if len(message) > 100 else ""))
+        with col2:
+            if status == "running":
+                st.progress(progress, text=f"{progress}%")
+            else:
+                st.markdown(f"<span style='color:{color}'>{status.upper()}</span>", unsafe_allow_html=True)
+
+        if is_llm_agent and model_options:
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                selected_model = st.selectbox(
+                    f"模型 ({agent['name']})",
+                    options=model_options,
+                    index=model_options.index(current_model) if current_model in model_options else 0,
+                    key=f"model_{agent['id']}",
+                    label_visibility="collapsed"
+                )
+            with col2:
+                st.write("") 
+                if st.button("🔄", key=f"refresh_{agent['id']}", help="刷新模型列表"):
+                    st.rerun()
+
+        st.divider()
 
 
 def main():
     """Main Streamlit app."""
     init_session_state()
 
-    st.sidebar.header("⚙️ Agent 配置")
+    st.sidebar.header("⚙️ 设置")
 
     with st.sidebar:
-        with st.expander("📋 Agent 列表", expanded=True):
+        from app.utils.llm import set_openrouter_api_key
+
+        st.subheader("🔑 OpenRouter API Key")
+        api_key_input = st.text_input(
+            "API Key",
+            type="password",
+            value=st.session_state.get("openrouter_api_key", ""),
+            help="用于获取免费模型列表"
+        )
+        if api_key_input != st.session_state.get("openrouter_api_key", ""):
+            st.session_state["openrouter_api_key"] = api_key_input
+            if api_key_input:
+                set_openrouter_api_key(api_key_input)
+
+        st.divider()
+
+        with st.expander("📋 Agent 列表", expanded=False):
             for agent in AGENTS:
-                st.write(f"**{agent['name']}**")
-                st.caption(f"模型: `{agent['model']}`")
+                st.write(f"**{agent['name']}** - {agent['description']}")
                 st.divider()
 
         st.divider()
@@ -181,10 +263,7 @@ def main():
         input_mode = st.radio(
             "输入方式",
             ["🌐 URL", "📋 粘贴文本"],
-            captions=[
-                "从网页提取内容",
-                "直接粘贴文章内容"
-            ]
+            captions=["从网页提取内容", "直接粘贴文章内容"]
         )
 
         if input_mode == "🌐 URL":
@@ -200,12 +279,11 @@ def main():
 
         st.divider()
 
-        run_button = st.button(
-            "🚀 开始处理",
-            type="primary",
-            disabled=st.session_state.processing
-        )
-        clear_button = st.button("🗑️ 清空")
+        col1, col2 = st.columns(2)
+        with col1:
+            run_button = st.button("🚀 开始处理", type="primary", disabled=st.session_state.processing)
+        with col2:
+            clear_button = st.button("🗑️ 清空")
 
         if clear_button:
             st.session_state.results = []
@@ -213,6 +291,8 @@ def main():
             st.rerun()
 
     st.markdown("## 🔄 Agent 工作流程")
+
+    model_options = get_openrouter_free_models()
 
     agent_status = {agent["id"]: "pending" for agent in AGENTS}
     agent_progress = {agent["id"]: 0 for agent in AGENTS}
@@ -225,12 +305,20 @@ def main():
             agent_messages[agent_id] = state_data.get("message", "")
 
     for agent in AGENTS:
+        current_model = st.session_state.agent_models.get(agent["id"], "openrouter/free")
         render_agent_card(
             agent,
             agent_status[agent["id"]],
             agent_progress[agent["id"]],
-            agent_messages[agent["id"]]
+            agent_messages[agent["id"]],
+            model_options=model_options,
+            current_model=current_model
         )
+
+        if agent["model"] != "direct":
+            new_model = st.session_state.get(f"model_{agent['id']}", current_model)
+            if new_model != current_model:
+                st.session_state.agent_models[agent["id"]] = new_model
 
     st.markdown("---")
 
@@ -273,7 +361,8 @@ def main():
                 url=url_input if input_mode == "🌐 URL" else None,
                 text=text_input if input_mode == "📋 粘贴文本" else None,
                 progress_callback=progress_handler,
-                stream_callback=stream_handler
+                stream_callback=stream_handler,
+                agent_models=st.session_state.agent_models
             ))
 
             for agent_id in agent_status:
