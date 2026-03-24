@@ -1,5 +1,6 @@
 """Streamlit Web UI for Knowledge OS."""
 
+import asyncio
 import streamlit as st
 from pathlib import Path
 import sys
@@ -44,7 +45,11 @@ def display_knowledge(result: dict):
 
     with col1:
         st.subheader("📄 摘要")
-        st.write(result.get("summary", "N/A")[:500] + "..." if len(result.get("summary", "")) > 500 else st.write(result.get("summary", "N/A"))
+        summary = result.get("summary", "N/A")
+        if len(summary) > 500:
+            st.write(summary[:500] + "...")
+        else:
+            st.write(summary)
 
     with col2:
         st.subheader("📊 统计")
@@ -126,7 +131,7 @@ def main():
         st.session_state.processing = True
         with st.spinner("🔄 处理中..."):
             try:
-                result = run_pipeline(url_input)
+                result = asyncio.run(run_pipeline(url_input))
                 st.session_state.results.append(result)
                 st.rerun()
             except Exception as e:
