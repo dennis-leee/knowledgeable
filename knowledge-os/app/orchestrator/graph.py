@@ -77,17 +77,17 @@ class KnowledgePipeline:
         if state.get("error") and not state.get("raw_text"):
             return state
 
-        update_progress("summarizer", 20)
-        state = await self.summarizer_agent.run(state)
-
-        update_progress("entity", 35)
+        update_progress("entity", 20)
         state = await self.entity_agent.run(state)
 
-        update_progress("relation", 50)
+        update_progress("relation", 35)
         state = await self.relation_agent.run(state)
 
-        update_progress("insight", 65)
+        update_progress("insight", 50)
         state = await self.insight_agent.run(state)
+
+        update_progress("summarizer", 65)
+        state = await self.summarizer_agent.run(state)
 
         update_progress("structuring", 75)
         state = await self.structuring_agent.run(state)

@@ -1,5 +1,117 @@
 {
-  "nodes": [],
-  "edges": [],
-  "metadata": {}
+  "nodes": [
+    {
+      "id": "61af9374a8588967",
+      "type": "knowledge",
+      "label": "GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？",
+      "data": {
+        "summary": "GitHub榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？\n原创\ndoup智能AI\ndoup智能AI\ndoup智能AI\n在小说阅读器中沉浸阅读\n「让机器替你打工」这件事，终于有人把它做成了开源项目。\n01 MoneyPrinterV2：名字就叫「印钞机」\n这大概是GitHub史上最直白的项目名了。\nMoneyPrinterV2\n，星数17,912，今日再涨283颗。核心功能就一句话：\n自动化在线赚钱\n。\n它能做什么？内容生成、SEO优化、联盟营销自动化……把那些你需要花8小时完成的重复性工作，压缩到几分钟内完成。\n📍 应用场景：\n自媒体矩阵运营、跨境电商、被动收入项目搭建\n💰 商业价值：\n一个人=一支团队，运营成本降低90%\n🔗 项目地址：\ngithub. com/FujiwaraChoki/MoneyPrinterV2\n有人说这是「作弊」，有人说是「效率革命」。但不可否认，工具正在重新定义「劳动」。\n02 Project N. O. M. A.",
+        "source": "https://mp.weixin.qq.com/s/bjnfQg30wOSFDtv_l6NvWA?scene=1&click_id=129",
+        "source_url": "https://mp.weixin.qq.com/s/bjnfQg30wOSFDtv_l6NvWA?scene=1&click_id=129",
+        "confidence": 0.7000000000000001,
+        "tags": [
+          "doup智能ai",
+          "trivy",
+          "project",
+          "crosstalk",
+          "github榜一火了：当开源工具开始自动赚钱，打工人的出路在哪？",
+          "claude",
+          "solutions"
+        ],
+        "created_at": "2026-03-24T07:22:25.208846"
+      }
+    },
+    {
+      "id": "entity:Project",
+      "type": "entity",
+      "label": "Project",
+      "data": {
+        "entity_type": "concept",
+        "description": "",
+        "aliases": [],
+        "confidence": 0.5
+      }
+    },
+    {
+      "id": "entity:Crosstalk",
+      "type": "entity",
+      "label": "Crosstalk",
+      "data": {
+        "entity_type": "concept",
+        "description": "",
+        "aliases": [],
+        "confidence": 0.5
+      }
+    },
+    {
+      "id": "entity:Solutions",
+      "type": "entity",
+      "label": "Solutions",
+      "data": {
+        "entity_type": "concept",
+        "description": "",
+        "aliases": [],
+        "confidence": 0.5
+      }
+    },
+    {
+      "id": "entity:Claude",
+      "type": "entity",
+      "label": "Claude",
+      "data": {
+        "entity_type": "concept",
+        "description": "",
+        "aliases": [],
+        "confidence": 0.5
+      }
+    },
+    {
+      "id": "entity:Trivy",
+      "type": "entity",
+      "label": "Trivy",
+      "data": {
+        "entity_type": "concept",
+        "description": "",
+        "aliases": [],
+        "confidence": 0.5
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge:61af9374a8588967:entity:Project",
+      "source": "61af9374a8588967",
+      "target": "entity:Project",
+      "type": "contains"
+    },
+    {
+      "id": "edge:61af9374a8588967:entity:Crosstalk",
+      "source": "61af9374a8588967",
+      "target": "entity:Crosstalk",
+      "type": "contains"
+    },
+    {
+      "id": "edge:61af9374a8588967:entity:Solutions",
+      "source": "61af9374a8588967",
+      "target": "entity:Solutions",
+      "type": "contains"
+    },
+    {
+      "id": "edge:61af9374a8588967:entity:Claude",
+      "source": "61af9374a8588967",
+      "target": "entity:Claude",
+      "type": "contains"
+    },
+    {
+      "id": "edge:61af9374a8588967:entity:Trivy",
+      "source": "61af9374a8588967",
+      "target": "entity:Trivy",
+      "type": "contains"
+    }
+  ],
+  "metadata": {
+    "updated_at": "2026-03-24T07:22:25.210718",
+    "node_count": 6,
+    "edge_count": 5
+  }
 }

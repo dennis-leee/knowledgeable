@@ -19,15 +19,38 @@ class SummarizerAgent(BaseAgent):
         self.max_tokens = self.config.get("max_tokens", 8000)
 
     async def run(self, state: PipelineState) -> PipelineState:
-        """Generate summary from raw text."""
-        raw_text = state.get("raw_text")
-        if not raw_text:
-            state["error"] = "No raw text to summarize"
+        """Generate summary from entities, relations, insights and optionally raw text."""
+        entities = state.get("entities", [])
+        relations = state.get("relations", [])
+        insights = state.get("insights", [])
+        raw_text = state.get("raw_text", "")
+
+        if not entities and not raw_text:
+            state["error"] = "No content to summarize"
             return state
 
         try:
             prompt_template = load_prompt("summarizer")
-            prompt = prompt_template.format(content=raw_text[: self.max_tokens])
+
+            entities_text = json.dumps(entities, ensure_ascii=False, indent=2)
+            relations_text = json.dumps(relations, ensure_ascii=False, indent=2)
+            insights_text = json.dumps(insights, ensure_ascii=False, indent=2)
+
+            if entities or relations or insights:
+                fallback_content = f"Original content (for reference only):\n{raw_text[:2000]}" if raw_text else ""
+                prompt = prompt_template.format(
+                    entities=entities_text,
+                    relations=relations_text,
+                    insights=insights_text,
+                    fallback_content=fallback_content
+                )
+            else:
+                prompt = prompt_template.format(
+                    entities="[]",
+                    relations="[]",
+                    insights="[]",
+                    fallback_content=f"Content:\n{raw_text[: self.max_tokens]}"
+                )
 
             response = await self.llm.call(prompt)
 
