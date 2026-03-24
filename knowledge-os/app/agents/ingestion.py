@@ -66,24 +66,56 @@ class IngestionAgent(BaseAgent):
         for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
             tag.decompose()
 
-        main_content = soup.find("main") or soup.find("article") or soup.find("body")
-
-        if main_content:
-            text = main_content.get_text(separator="\n", strip=True)
+        wechat_content = soup.find("section", {"id": "js_content"})
+        if wechat_content:
+            text = wechat_content.get_text(separator="\n", strip=True)
         else:
-            text = soup.get_text(separator="\n", strip=True)
+            main_content = soup.find("main") or soup.find("article") or soup.find(
+                "div", {"class": lambda x: x and ("content" in x.lower() or "article" in x.lower() or "post" in x.lower())}
+            ) or soup.find("body")
+
+            if main_content:
+                text = main_content.get_text(separator="\n", strip=True)
+            else:
+                text = soup.get_text(separator="\n", strip=True)
 
         text = re.sub(r"\n{3,}", "\n\n", text)
+        text = re.sub(r"[\x00-\x08\x0b-\x0c\x0e-\x1f\x7f-\x9f]", "", text)
         text = text.strip()
 
+        if len(text) < 200:
+            text = self._extract_by_readability(soup)
+
         return text
+
+    def _extract_by_readability(self, soup: BeautifulSoup) -> str:
+        """Fallback extraction using readability-like algorithm."""
+        from bs4 import Comment
+
+        for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+            comment.extract()
+
+        candidates = []
+        for tag in soup.find_all(["div", "section", "article"]):
+            text = tag.get_text(strip=True)
+            score = len(text)
+            for cls in ["content", "article", "post", "entry", "main", "text"]:
+                if cls in (tag.get("class") or []) or cls in (tag.get("id") or "").lower():
+                    score *= 2
+            candidates.append((score, tag))
+
+        if candidates:
+            best = max(candidates, key=lambda x: x[0])[1]
+            return best.get_text(separator="\n", strip=True)
+
+        return soup.get_text(separator="\n", strip=True)
 
     def _extract_title(self, text: str) -> Optional[str]:
         """Extract title from text."""
         lines = text.split("\n")
         for line in lines[:10]:
             line = line.strip()
-            if len(line) > 5 and len(line) < 200:
+            if len(line) > 5 and len(line) < 200 and not line.startswith(("微信", "赞", "在看", "分享", "收藏", "评论")):
                 return line
         return None
 

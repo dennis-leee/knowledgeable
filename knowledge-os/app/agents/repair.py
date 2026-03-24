@@ -1,12 +1,22 @@
 """Repair agent - fix invalid data using LLM."""
 
 import json
+from datetime import datetime
 from typing import Any, Dict
 
 from app.agents.base import BaseAgent
 from app.orchestrator.state import PipelineState
 from app.prompts import load_prompt
 from app.utils.llm import get_llm_interface
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder for datetime objects."""
+
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
 
 
 class RepairAgent(BaseAgent):
@@ -38,7 +48,7 @@ class RepairAgent(BaseAgent):
             prompt_template = load_prompt("repair")
             prompt = prompt_template.format(
                 error="\n".join(validation_errors),
-                invalid_data=json.dumps(knowledge_data, ensure_ascii=False, indent=2),
+                invalid_data=json.dumps(knowledge_data, ensure_ascii=False, indent=2, cls=DateTimeEncoder),
             )
 
             response = await self.llm.call(prompt)

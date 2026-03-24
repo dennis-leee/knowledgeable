@@ -44,7 +44,7 @@ class KnowledgePipeline:
         self.memory_agent = MemoryAgent(config=storage_config)
         self.skills_agent = SkillsAgent(config=storage_config)
 
-    async def run(self, url: str) -> "PipelineState":
+    async def run(self, url: str, progress_callback=None) -> "PipelineState":
         """Run the complete pipeline for a URL."""
         from app.orchestrator.state import PipelineState
 
@@ -68,26 +68,49 @@ class KnowledgePipeline:
             "review_notes": None,
         }
 
+        def update_progress(stage: str, progress: int):
+            if progress_callback:
+                progress_callback(stage, progress)
+
+        update_progress("ingestion", 10)
         state = await self.ingestion_agent.run(state)
         if state.get("error") and not state.get("raw_text"):
             return state
 
+        update_progress("summarizer", 20)
         state = await self.summarizer_agent.run(state)
+
+        update_progress("entity", 35)
         state = await self.entity_agent.run(state)
+
+        update_progress("relation", 50)
         state = await self.relation_agent.run(state)
+
+        update_progress("insight", 65)
         state = await self.insight_agent.run(state)
+
+        update_progress("structuring", 75)
         state = await self.structuring_agent.run(state)
+
+        update_progress("validation", 80)
         state = await self.validation_agent.run(state)
 
         max_retries = self.config.get("pipeline", {}).get("retry_limit", 3)
-        while not state.get("validated") and state.get("retry_count", 0) < max_retries:
+        retry_count = 0
+        while not state.get("validated") and retry_count < max_retries:
+            update_progress("repair", 85)
             state = await self.repair_agent.run(state)
             state = await self.validation_agent.run(state)
+            retry_count += 1
 
         if state.get("validated"):
+            update_progress("memory", 92)
             state = await self.memory_agent.run(state)
             if state.get("stored"):
+                update_progress("skills", 100)
                 state = await self.skills_agent.run(state)
+        else:
+            update_progress("validation", 100)
 
         return state
 
